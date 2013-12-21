@@ -17,6 +17,7 @@ typedef struct file_t_t
     AVStream* stream;
     AVCodecContext* codec_context;
     AVCodec* codec;
+    AVFormatContext* format_context;
 
 } file_t;
 

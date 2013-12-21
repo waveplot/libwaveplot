@@ -26,20 +26,20 @@ int load_file(char* path, file_t* file)
     file->path = (char*)malloc(strlen(path)+1);
     strcpy(file->path,path);
 
-    AVFormatContext* format_context = NULL;
+    file->format_context = NULL;
 
-    if(avformat_open_input(&format_context, file->path, NULL, NULL) < 0)
+    if(avformat_open_input(&(file->format_context), file->path, NULL, NULL) < 0)
         return -1;
 
-    if(avformat_find_stream_info(format_context, NULL) < 0)
+    if(avformat_find_stream_info(file->format_context, NULL) < 0)
         return -1;
 
-    int stream_no = av_find_best_stream(format_context,AVMEDIA_TYPE_AUDIO,-1,-1,NULL,0);
+    int stream_no = av_find_best_stream(file->format_context,AVMEDIA_TYPE_AUDIO,-1,-1,NULL,0);
 
     if(stream_no < 0)
         return -1;
 
-    file->stream = format_context->streams[stream_no];
+    file->stream = file->format_context->streams[stream_no];
 
     file->codec_context = file->stream->codec;
 
