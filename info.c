@@ -23,6 +23,11 @@ void get_info(file_t* file, info_t* info)
     info->sample_rate  = (uint32_t)file->codec_context->sample_rate;
     info->bit_rate = (uint32_t)file->codec_context->bit_rate;
 
+    enum AVSampleFormat sample_format = file->codec_context->sample_fmt;
+    info->bit_depth = (uint16_t)av_get_bytes_per_sample(sample_format) * 8;
+
+    puts("TEST");
+
     info->file_format = (char*)malloc(strlen(file->codec->name)+1);
     strcpy(info->file_format,file->codec->name);
 }
