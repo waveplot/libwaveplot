@@ -1,4 +1,6 @@
 #include <string.h>
+#include <stdlib.h>
+
 
 typedef struct file_t_t file_t;
 

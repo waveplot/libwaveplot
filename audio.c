@@ -85,11 +85,11 @@ float** normalize_double_samples(uint8_t** samples, info_t* info, size_t num_sam
     return normalized_data;
 }
 
-uint8_t** split_interleaved_data(uint8_t** data, info_t* info, size_t data_size, uint8_t bytes_per_sample)
+uint8_t** split_interleaved_data(uint8_t** data, info_t* info, size_t total_bytes, uint8_t bytes_per_sample)
 {
     uint8_t num_channels = info->num_channels;
     uint8_t** channel_samples = (uint8_t**)malloc(sizeof(uint8_t*)*num_channels);
-    size_t bytes_per_channel = data_size / num_channels;
+    size_t bytes_per_channel = total_bytes / num_channels;
 
     for(size_t channel = 0; channel != num_channels; ++channel)
     {
@@ -107,11 +107,12 @@ uint8_t** split_interleaved_data(uint8_t** data, info_t* info, size_t data_size,
     return channel_samples;
 }
 
-uint8_t** copy_planar_data(uint8_t** data, info_t* info, size_t data_size, uint8_t bytes_per_sample)
+uint8_t** copy_planar_data(uint8_t** data, info_t* info, size_t total_bytes, uint8_t bytes_per_sample)
 {
+    uint8_t num_channels = info->num_channels;
     uint8_t** channel_samples = (uint8_t**)malloc(sizeof(uint8_t*)*info->num_channels);
-    size_t bytes_per_channel = data_size;
-    for(size_t channel = 0; channel != info->num_channels; ++channel)
+    size_t bytes_per_channel = total_bytes / num_channels;
+    for(size_t channel = 0; channel != num_channels; ++channel)
     {
         channel_samples[channel] = (uint8_t*)malloc(sizeof(uint8_t)*bytes_per_channel);
         memcpy(channel_samples[channel], data[channel], bytes_per_channel);
@@ -148,10 +149,10 @@ audio_samples_t* get_samples(file_t* file, info_t* info, audio_samples_t* sample
         return NULL;
     }
 
-    int data_size = av_samples_get_buffer_size(NULL, info->num_channels, frame->nb_samples, sample_format, 1);
+    int total_bytes = av_samples_get_buffer_size(NULL, info->num_channels, frame->nb_samples, sample_format, 1);
     uint8_t bytes_per_sample = (uint8_t)av_get_bytes_per_sample(sample_format);
 
-    samples->length = data_size / bytes_per_sample;
+    samples->length = total_bytes / (info->num_channels * bytes_per_sample);
 
     uint8_t** data_by_channel = NULL;
     //Split interleaved data into separate buffers for each channel.
@@ -160,11 +161,11 @@ audio_samples_t* get_samples(file_t* file, info_t* info, audio_samples_t* sample
        (sample_format == AV_SAMPLE_FMT_FLT) ||
        (sample_format == AV_SAMPLE_FMT_DBL))
     {
-        data_by_channel = split_interleaved_data(frame->data, info, data_size, bytes_per_sample);
+        data_by_channel = split_interleaved_data(frame->data, info, total_bytes, bytes_per_sample);
     }
     else
     {
-        data_by_channel = copy_planar_data(frame->data, info, data_size, bytes_per_sample);
+        data_by_channel = copy_planar_data(frame->data, info, total_bytes, bytes_per_sample);
     }
 
     //free the frame and its data here - we've got a copy in planar form
