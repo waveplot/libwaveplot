@@ -11,7 +11,11 @@ waveplot_t* alloc_waveplot_data(void)
 {
     waveplot_t* result = (waveplot_t*)malloc(sizeof(waveplot_t));
     result->length = 0;
-    result->_capacity = 512;
+    
+    /* Assume song likely to be less than four minutes
+     * 4 mins * 60 secs = 240 secs, 240 secs * 4 Hz = 960 chunks
+     */
+    result->_capacity = 1024;
     result->values = (float*)malloc(sizeof(float) * result->_capacity);
     return result;
     

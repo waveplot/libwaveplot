@@ -2,6 +2,7 @@
 #include "info.h"
 #include "audio.h"
 #include "waveplot.h"
+#include "dr.h"
 
 #include "stdio.h"
 
