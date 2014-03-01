@@ -17,16 +17,17 @@ int main(int argc, char* argv[])
     
     audio_samples_t* a = alloc_audio_samples();
     waveplot_t* w = alloc_waveplot_data();
+    dr_t* d = alloc_dr();
+    init_dr(i,d);
 
-    while(get_samples(f,i,a) != 0)
+    while(get_samples(f,i,a) != NULL)
     {
         update_waveplot(a, i, w);
+        update_dr(a, i, d);
     }
     
     normalize_waveplot(w);
+    postprocess_dr(i,d);
     
-    for(size_t i = 0; i != w->length; ++i)
-    {
-        printf("%f,%f\n",w->values[i],-w->values[i]);
-    }
+    printf("DR: %f\n",d->rating);
 }

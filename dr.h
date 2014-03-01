@@ -14,6 +14,8 @@ typedef struct dr_t_t
     size_t length;
     
     size_t _capacity;
+    
+    float rating;
 } dr_t;
 
 dr_t* alloc_dr(void);
@@ -21,3 +23,4 @@ void free_dr(dr_t* dr);
 void init_dr(info_t* info, dr_t* dr);
 void update_dr(audio_samples_t* samples, info_t* info, dr_t* dr_data);
 void merge_sort(float* values, size_t length);
+void postprocess_dr(info_t* info, dr_t* dr);

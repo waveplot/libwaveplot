@@ -126,7 +126,7 @@ audio_samples_t* get_samples(file_t* file, info_t* info, audio_samples_t* sample
     AVCodec* codec = avcodec_find_decoder(file->codec_context->codec_id);
 
     if (avcodec_open2(file->codec_context, codec, NULL) < 0)
-	return NULL;
+        return NULL;
 
     AVPacket packet;
     int decoded;
@@ -135,7 +135,7 @@ audio_samples_t* get_samples(file_t* file, info_t* info, audio_samples_t* sample
     AVFrame* frame = avcodec_alloc_frame();
 
     if(av_read_frame(file->format_context, &packet) != 0)
-	return NULL;
+        return NULL;
 
     avcodec_decode_audio4(file->codec_context, frame, &decoded, &packet);
 
@@ -163,9 +163,17 @@ audio_samples_t* get_samples(file_t* file, info_t* info, audio_samples_t* sample
     {
         data_by_channel = split_interleaved_data(frame->data, info, total_bytes, bytes_per_sample);
     }
-    else
+    else if((sample_format == AV_SAMPLE_FMT_S16P) ||
+            (sample_format == AV_SAMPLE_FMT_S32P) ||
+            (sample_format == AV_SAMPLE_FMT_FLTP) ||
+            (sample_format == AV_SAMPLE_FMT_DBLP))
     {
         data_by_channel = copy_planar_data(frame->data, info, total_bytes, bytes_per_sample);
+    }
+    else
+    {
+        return NULL;
+        puts("Sample format unsupported");
     }
 
     //free the frame and its data here - we've got a copy in planar form
@@ -190,6 +198,9 @@ audio_samples_t* get_samples(file_t* file, info_t* info, audio_samples_t* sample
       case AV_SAMPLE_FMT_DBLP:
         samples->samples = normalize_double_samples(data_by_channel, info, samples->length);
         break;
+      default:
+        //Shouldn't ever get here.
+        puts("Sample format unsupported - code error!\n");
     }
 
     //free planar data allocated earlier, since we have it normalized now.
