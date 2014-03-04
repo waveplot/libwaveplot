@@ -1,4 +1,22 @@
-#include <string.h>
+/*
+ * Copyright 2014 Ben Ockmore
+ *
+ * This file is part of libwaveplot.
+
+ * libwaveplot is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
+
+ * libwaveplot is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libwaveplot. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <stdlib.h>
 
 typedef struct info_t_t info_t;
@@ -9,18 +27,16 @@ typedef struct dr_t_t
 {
     float** channel_peak;
     float** channel_rms;
-    size_t processed_samples;
-    
     size_t length;
     
-    size_t _capacity;
-    
     float rating;
+    
+    size_t _capacity;
+    size_t _processed_samples;
 } dr_t;
 
 dr_t* alloc_dr(void);
 void free_dr(dr_t* dr);
-void init_dr(info_t* info, dr_t* dr);
-void update_dr(audio_samples_t* samples, info_t* info, dr_t* dr_data);
-void merge_sort(float* values, size_t length);
-void postprocess_dr(info_t* info, dr_t* dr);
+void init_dr(dr_t* dr, info_t* info);
+void update_dr(dr_t* dr_data, audio_samples_t* samples, info_t* info);
+void finish_dr(dr_t* dr, info_t* info);

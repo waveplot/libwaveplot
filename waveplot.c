@@ -1,13 +1,32 @@
+/*
+ * Copyright 2014 Ben Ockmore
+ *
+ * This file is part of libwaveplot.
+
+ * libwaveplot is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
+
+ * libwaveplot is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libwaveplot. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "waveplot.h"
 
 #include "audio.h"
 #include "info.h"
 
+#include <string.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <math.h>
 
-waveplot_t* alloc_waveplot_data(void)
+waveplot_t* alloc_waveplot(void)
 {
     waveplot_t* result = (waveplot_t*)malloc(sizeof(waveplot_t));
     result->length = 0;
@@ -21,13 +40,13 @@ waveplot_t* alloc_waveplot_data(void)
     
 }
 
-void free_waveplot_data(waveplot_t* waveplot_data)
+void free_waveplot(waveplot_t* waveplot)
 {
-    free(waveplot_data->values);
-    free(waveplot_data);
+    free(waveplot->values);
+    free(waveplot);
 }
 
-void update_waveplot(audio_samples_t* samples, info_t* info, waveplot_t* waveplot_data)
+void update_waveplot(waveplot_t* waveplot, audio_samples_t* samples, info_t* info)
 {
     static uint32_t current_chunk_samples = 0;
     static float current_chunk = 0.0;
@@ -37,14 +56,14 @@ void update_waveplot(audio_samples_t* samples, info_t* info, waveplot_t* waveplo
     if((samples->length + current_chunk_samples) > samples_per_chunk)
     {
         // New chunk - check whether the container needs a resize
-        if(waveplot_data->length == waveplot_data->_capacity)
+        if(waveplot->length == waveplot->_capacity)
         {
             // Increase the length of the container by 2, and copy the old data
-            waveplot_data->_capacity *= 2;
-            float* new_array = (float*)malloc(sizeof(float) * waveplot_data->_capacity);
-            memcpy(new_array, waveplot_data->values, sizeof(float) * waveplot_data->length);
-            free(waveplot_data->values);
-            waveplot_data->values = new_array;
+            waveplot->_capacity *= 2;
+            float* new_array = (float*)malloc(sizeof(float) * waveplot->_capacity);
+            memcpy(new_array, waveplot->values, sizeof(float) * waveplot->length);
+            free(waveplot->values);
+            waveplot->values = new_array;
         }
     }
 
@@ -58,8 +77,8 @@ void update_waveplot(audio_samples_t* samples, info_t* info, waveplot_t* waveplo
         
         if(current_chunk_samples == samples_per_chunk)
         {
-            waveplot_data->values[waveplot_data->length] = current_chunk;
-            ++waveplot_data->length;
+            waveplot->values[waveplot->length] = current_chunk;
+            ++waveplot->length;
 
             current_chunk = 0.0;
             current_chunk_samples = 0;
@@ -70,27 +89,27 @@ void update_waveplot(audio_samples_t* samples, info_t* info, waveplot_t* waveplo
     }
 }
 
-void normalize_waveplot(waveplot_t* waveplot_data)
+void finish_waveplot(waveplot_t* waveplot)
 {
     static const float sample_weightings[] = {10.0, 8.0, 5.0, 3.0};
     static const size_t num_weightings = sizeof(sample_weightings)/sizeof(float);
-    float* processed = (float*)malloc(sizeof(float) * waveplot_data->_capacity);
+    float* processed = (float*)malloc(sizeof(float) * waveplot->_capacity);
     
-    for(size_t i = 0; i != waveplot_data->length; ++i)
+    for(size_t i = 0; i != waveplot->length; ++i)
     {
         processed[i] = 0.0f;
     }
     
-    for(size_t i = 0; i != waveplot_data->length; ++i)
+    for(size_t i = 0; i != waveplot->length; ++i)
     {
-        float chunk = waveplot_data->values[i];
+        float chunk = waveplot->values[i];
         processed[i] += chunk * sample_weightings[0];
         for(size_t j = 1; j != num_weightings; ++j)
         {
             float value = chunk * sample_weightings[j];
             size_t index = i + j;
 
-            if(index < waveplot_data->length) {
+            if(index < waveplot->length) {
                 processed[index] += value;
             }
             index = i - j;
@@ -102,17 +121,17 @@ void normalize_waveplot(waveplot_t* waveplot_data)
     }
     
     float max_chunk = 0.0f;
-    for(size_t i = 0; i != waveplot_data->length; ++i)
+    for(size_t i = 0; i != waveplot->length; ++i)
     {
         max_chunk = fmaxf(processed[i], max_chunk);
     }
    
 
-    for(size_t i = 0; i != waveplot_data->length; ++i)
+    for(size_t i = 0; i != waveplot->length; ++i)
     {
         processed[i] /= max_chunk;
     }
     
-    free(waveplot_data->values);
-    waveplot_data->values = processed;
+    free(waveplot->values);
+    waveplot->values = processed;
 }

@@ -1,16 +1,37 @@
+/*
+ * Copyright 2014 Ben Ockmore
+ *
+ * This file is part of libwaveplot.
+
+ * libwaveplot is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
+
+ * libwaveplot is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libwaveplot. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "dr.h"
 
-#include "audio.h"
 #include "info.h"
+#include "audio.h"
 
+#include <string.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <math.h>
 
 /*
  * Implemented based on:
  * http://www.dynamicrange.de/sites/default/files/Measuring%20DR%20ENv3.pdf
  */
+
+void merge_sort(float* values, size_t length);
 
 dr_t* alloc_dr(void)
 {
@@ -19,7 +40,7 @@ dr_t* alloc_dr(void)
     result->_capacity = 0;
     result->channel_peak = NULL;
     result->channel_rms = NULL;
-    result->processed_samples = 0;
+    result->_processed_samples = 0;
     return result;
 }
 
@@ -30,7 +51,7 @@ void free_dr(dr_t* dr)
     free(dr);
 }
 
-void init_dr(info_t* info, dr_t* dr)
+void init_dr(dr_t* dr, info_t* info)
 {
     dr->channel_peak = (float**)malloc(sizeof(float*)*info->num_channels);
     dr->channel_rms = (float**)malloc(sizeof(float*)*info->num_channels);
@@ -45,12 +66,12 @@ void init_dr(info_t* info, dr_t* dr)
     }
 }
 
-void update_dr(audio_samples_t* samples, info_t* info, dr_t* dr)
+void update_dr(dr_t* dr, audio_samples_t* samples, info_t* info)
 {
     size_t samples_per_chunk = info->sample_rate * 3;
     
     // Check whether there are too many samples for the current chunk
-    if((samples->length + dr->processed_samples) > samples_per_chunk)
+    if((samples->length + dr->_processed_samples) > samples_per_chunk)
     {
         // New chunk - check whether the container needs a resize
         if(dr->length == dr->_capacity)
@@ -72,11 +93,11 @@ void update_dr(audio_samples_t* samples, info_t* info, dr_t* dr)
         }
     }
     
-    uint32_t cur_ch_num_samples = dr->processed_samples;
+    uint32_t cur_ch_num_samples = dr->_processed_samples;
     uint32_t cur_ch_length = dr->length;
     for(size_t channel = 0; channel != info->num_channels; ++channel)
     {
-        cur_ch_num_samples = dr->processed_samples;
+        cur_ch_num_samples = dr->_processed_samples;
         cur_ch_length = dr->length;
         
         float* cur_ch_peak = &(dr->channel_peak[channel][cur_ch_length]);
@@ -105,7 +126,7 @@ void update_dr(audio_samples_t* samples, info_t* info, dr_t* dr)
         }
     }
     
-    dr->processed_samples = cur_ch_num_samples;
+    dr->_processed_samples = cur_ch_num_samples;
     dr->length = cur_ch_length;   
 }
 
@@ -144,12 +165,12 @@ void merge_sort(float* values, size_t length)
     free(temp);
 }
 
-void postprocess_dr(info_t* info, dr_t* dr)
+void finish_dr(dr_t* dr, info_t* info)
 {
     dr->rating = 0.0f;
     for(size_t channel = 0; channel != info->num_channels; ++channel)
     {
-        dr->channel_rms[channel][dr->length] = sqrtf((2.0 * dr->channel_rms[channel][dr->length]) / dr->processed_samples);
+        dr->channel_rms[channel][dr->length] = sqrtf((2.0 * dr->channel_rms[channel][dr->length]) / dr->_processed_samples);
 
         merge_sort(dr->channel_rms[channel], dr->length);
 
