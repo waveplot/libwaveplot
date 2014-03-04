@@ -15,7 +15,11 @@ allows other C/C++ applications to use libwaveplot functions directly.
 Compiling
 =========
 
-The following steps are used to compile libwaveplot in a GCC style tool:
+The included Makefile can be used to compile libwaveplot or libwptest (testing
+application):
 
-    gcc -Wall -fPIC info.c file.c
-    gcc -shared -Wl,-soname,libwaveplot.so.1 -o libwaveplot.so.1.0 info.o file.o -lavutil -lavcodec -lavformat
+    make libwaveplot
+    make libwptest
+
+In order to successfully build these targets, a recent version of libav will
+need to be installed on your machine.
