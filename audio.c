@@ -1,9 +1,32 @@
+/*
+ * Copyright 2014 Ben Ockmore
+ *
+ * This file is part of libwaveplot.
+
+ * libwaveplot is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
+
+ * libwaveplot is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libwaveplot. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "audio.h"
+
 #include "info.h"
 #include "file.h"
 
 #include "libavcodec/avcodec.h"
 #include "libavutil/samplefmt.h"
+
+#include <stdlib.h>
+#include <stdint.h>
 
 audio_samples_t* alloc_audio_samples(void)
 {
@@ -13,9 +36,9 @@ audio_samples_t* alloc_audio_samples(void)
     
 }
 
-void free_audio_samples(audio_samples_t* file)
+void free_audio_samples(audio_samples_t* samples)
 {
-    free(file);
+    free(samples);
 }
 
 float** normalize_int16_t_samples(uint8_t** samples, info_t* info, size_t num_samples)
@@ -121,7 +144,7 @@ uint8_t** copy_planar_data(uint8_t** data, info_t* info, size_t total_bytes, uin
     return channel_samples;
 }
 
-audio_samples_t* get_samples(file_t* file, info_t* info, audio_samples_t* samples)
+audio_samples_t* get_samples(audio_samples_t* samples, file_t* file, info_t* info)
 {
     AVCodec* codec = avcodec_find_decoder(file->codec_context->codec_id);
 
@@ -173,7 +196,6 @@ audio_samples_t* get_samples(file_t* file, info_t* info, audio_samples_t* sample
     else
     {
         return NULL;
-        puts("Sample format unsupported");
     }
 
     //free the frame and its data here - we've got a copy in planar form
@@ -200,7 +222,7 @@ audio_samples_t* get_samples(file_t* file, info_t* info, audio_samples_t* sample
         break;
       default:
         //Shouldn't ever get here.
-        puts("Sample format unsupported - code error!\n");
+        break;
     }
 
     //free planar data allocated earlier, since we have it normalized now.

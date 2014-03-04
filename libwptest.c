@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     dr_t* d = alloc_dr();
     init_dr(d,i);
 
-    while(get_samples(f,i,a) != NULL)
+    while(get_samples(a,f,i) != NULL)
     {
         update_waveplot(w, a, i);
         update_dr(d, a, i);
