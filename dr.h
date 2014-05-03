@@ -26,15 +26,15 @@
 
 struct dr_t_t
 {
-    float** channel_peak;
-    float** channel_rms;
-    size_t num_channels;
-    size_t length;
+	float** channel_peak;
+	float** channel_rms;
+	size_t num_channels;
+	size_t length;
 
-    float rating;
+	float rating;
 
-    size_t _capacity;
-    size_t _processed_samples;
+	size_t _capacity;
+	size_t _processed_samples;
 };
 
 dr_t* alloc_dr(void);

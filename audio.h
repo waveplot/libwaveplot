@@ -26,9 +26,9 @@
 
 struct audio_samples_t_t
 {
-    float** samples;
-    size_t num_channels;
-    size_t length;
+	float** samples;
+	size_t num_channels;
+	size_t length;
 };
 
 audio_samples_t* alloc_audio_samples(void);

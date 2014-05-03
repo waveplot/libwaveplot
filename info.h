@@ -26,15 +26,15 @@
 
 struct info_t_t
 {
-    uint32_t duration_secs;
+	uint32_t duration_secs;
 
-    uint8_t num_channels;
+	uint8_t num_channels;
 
-    uint16_t bit_depth;
-    uint32_t bit_rate;
-    uint32_t sample_rate;
+	uint16_t bit_depth;
+	uint32_t bit_rate;
+	uint32_t sample_rate;
 
-    char* file_format;
+	char* file_format;
 };
 
 /* For allocating and freeing information structures */

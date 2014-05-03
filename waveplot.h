@@ -26,10 +26,10 @@
 
 struct waveplot_t_t
 {
-    float* values;
-    size_t length;
+	float* values;
+	size_t length;
 
-    size_t _capacity;
+	size_t _capacity;
 };
 
 

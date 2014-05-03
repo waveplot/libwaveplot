@@ -28,13 +28,13 @@
 
 struct file_t_t
 {
-    char* path;
+	char* path;
 
-    AVStream* stream;
-    AVCodecContext* codec_context;
-    AVCodec* codec;
-    AVFormatContext* format_context;
-    AVAudioResampleContext* resample_context;
+	AVStream* stream;
+	AVCodecContext* codec_context;
+	AVCodec* codec;
+	AVFormatContext* format_context;
+	AVAudioResampleContext* resample_context;
 
 };
 
