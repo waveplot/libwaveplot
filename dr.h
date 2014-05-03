@@ -17,26 +17,30 @@
  * along with libwaveplot. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef __LIBWP_DR_H__
+#define __LIBWP_DR_H__
+
 #include <stdlib.h>
 
-typedef struct info_t_t info_t;
+#include "typedefs.h"
 
-typedef struct audio_samples_t_t audio_samples_t;
-
-typedef struct dr_t_t
+struct dr_t_t
 {
     float** channel_peak;
     float** channel_rms;
+    size_t num_channels;
     size_t length;
-    
+
     float rating;
-    
+
     size_t _capacity;
     size_t _processed_samples;
-} dr_t;
+};
 
 dr_t* alloc_dr(void);
 void free_dr(dr_t* dr);
 void init_dr(dr_t* dr, info_t* info);
 void update_dr(dr_t* dr_data, audio_samples_t* samples, info_t* info);
 void finish_dr(dr_t* dr, info_t* info);
+
+#endif //__LIBWP_DR_H__

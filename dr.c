@@ -26,6 +26,10 @@
 #include <stdint.h>
 #include <math.h>
 
+#include <stdio.h>
+
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
 /*
  * Implemented based on:
  * http://www.dynamicrange.de/sites/default/files/Measuring%20DR%20ENv3.pdf
@@ -36,70 +40,125 @@ void merge_sort(float* values, size_t length);
 dr_t* alloc_dr(void)
 {
     dr_t* result = (dr_t*)malloc(sizeof(dr_t));
+
+    if(result == NULL)
+        return NULL;
+
     result->length = 0;
     result->_capacity = 0;
+    result->rating = 0.0f;
     result->channel_peak = NULL;
     result->channel_rms = NULL;
     result->_processed_samples = 0;
+    result->num_channels = 0;
     return result;
+}
+
+void free_dr_data(dr_t* dr)
+{
+    if(dr->channel_peak != NULL)
+    {
+        for(size_t i = 0; i != dr->num_channels; ++i)
+        {
+            free(dr->channel_peak[i]);
+        }
+        free(dr->channel_peak);
+        dr->channel_peak = NULL;
+    }
+
+    if(dr->channel_rms != NULL)
+    {
+        for(size_t i = 0; i != dr->num_channels; ++i)
+        {
+            free(dr->channel_rms[i]);
+        }
+        free(dr->channel_rms);
+        dr->channel_rms = NULL;
+    }
 }
 
 void free_dr(dr_t* dr)
 {
-    free(dr->channel_peak);
-    free(dr->channel_rms);
+    free_dr_data(dr);
     free(dr);
 }
 
 void init_dr(dr_t* dr, info_t* info)
 {
-    dr->channel_peak = (float**)malloc(sizeof(float*)*info->num_channels);
-    dr->channel_rms = (float**)malloc(sizeof(float*)*info->num_channels);
-    
+    free_dr_data(dr);
+
+    dr->num_channels = info->num_channels;
+
+    dr->channel_peak = (float**)malloc(sizeof(float*)*dr->num_channels);
+    dr->channel_rms = (float**)malloc(sizeof(float*)*dr->num_channels);
+
     dr->_capacity = 128;
-    for(int i = 0; i != info->num_channels; ++i)
+    for(int c = 0; c != info->num_channels; ++c)
     {
-        dr->channel_peak[i] = (float*)malloc(sizeof(float)*dr->_capacity);
-        dr->channel_rms[i] = (float*)malloc(sizeof(float)*dr->_capacity);
-        dr->channel_peak[i][0] = 0.0f;
-        dr->channel_rms[i][0] = 0.0f;
+        dr->channel_peak[c] = (float*)malloc(sizeof(float)*dr->_capacity);
+        dr->channel_rms[c] = (float*)malloc(sizeof(float)*dr->_capacity);
+        for(size_t i = 0; i != dr->_capacity; ++i)
+        {
+            dr->channel_peak[c][i] = 0.0f;
+            dr->channel_rms[c][i] = 0.0f;
+        }
     }
 }
 
 void update_dr(dr_t* dr, audio_samples_t* samples, info_t* info)
 {
     size_t samples_per_chunk = info->sample_rate * 3;
-    
+
+    if(dr->num_channels != info->num_channels)
+    {
+        fprintf(stderr,"ERROR: Number of channels inconsistent!\n");
+        return;
+    }
+
+    size_t num_new_chunks = (samples->length + dr->_processed_samples) / samples_per_chunk;
+
     // Check whether there are too many samples for the current chunk
-    if((samples->length + dr->_processed_samples) > samples_per_chunk)
+    if(num_new_chunks > 0)
     {
         // New chunk - check whether the container needs a resize
-        if(dr->length == dr->_capacity)
+        float relative_new_size = (float)(dr->length + num_new_chunks) / dr->_capacity;
+
+        if(relative_new_size >= 1.0)
         {
+            size_t new_buffer_size = dr->_capacity * pow(2, ceil(log(relative_new_size+1.0)/log(2)));
+
             // Increase the length of the container by 2, and copy the old data
-            dr->_capacity *= 2;
-            for(int i = 0; i != info->num_channels; ++i)
+            dr->_capacity = new_buffer_size;
+            for(int c = 0; c != info->num_channels; ++c)
             {
-                float* new_array = (float*)malloc(sizeof(float) * dr->_capacity);
-                memcpy(new_array, dr->channel_rms[i], sizeof(float) * dr->length);
-                free(dr->channel_rms[i]);
-                dr->channel_rms[i] = new_array;
-                
-                new_array = (float*)malloc(sizeof(float) * dr->_capacity);
-                memcpy(new_array, dr->channel_peak[i], sizeof(float) * dr->length);
-                free(dr->channel_peak[i]);
-                dr->channel_peak[i] = new_array;
+                float* new_channel_peak = (float*)malloc(sizeof(float) * dr->_capacity);
+                float* new_channel_rms = (float*)malloc(sizeof(float) * dr->_capacity);
+
+                for(size_t i = 0; i != dr->_capacity; ++i)
+                {
+                    new_channel_peak[i] = 0.0f;
+                    new_channel_rms[i] = 0.0f;
+                }
+
+                memcpy(new_channel_peak, dr->channel_peak[c], sizeof(float) * dr->length);
+                memcpy(new_channel_rms, dr->channel_rms[c], sizeof(float) * dr->length);
+
+                free(dr->channel_peak[c]);
+                free(dr->channel_rms[c]);
+
+                dr->channel_peak[c] = new_channel_peak;
+                dr->channel_rms[c] = new_channel_rms;
             }
         }
     }
-    
+
     uint32_t cur_ch_num_samples = dr->_processed_samples;
     uint32_t cur_ch_length = dr->length;
     for(size_t channel = 0; channel != info->num_channels; ++channel)
     {
         cur_ch_num_samples = dr->_processed_samples;
         cur_ch_length = dr->length;
-        
+
         float* cur_ch_peak = &(dr->channel_peak[channel][cur_ch_length]);
         float* cur_ch_rms = &(dr->channel_rms[channel][cur_ch_length]);
         float* cur_ch_samples = samples->samples[channel];
@@ -110,59 +169,31 @@ void update_dr(dr_t* dr, audio_samples_t* samples, info_t* info)
                 (*cur_ch_rms) = sqrtf((2.0 * (*cur_ch_rms)) / samples_per_chunk);
 
                 ++cur_ch_length;
-                
+
                 cur_ch_peak = &(dr->channel_peak[channel][cur_ch_length]);
                 cur_ch_rms = &(dr->channel_rms[channel][cur_ch_length]);
-                (*cur_ch_peak) = 0.0f;
-                (*cur_ch_rms) = 0.0f;
 
                 cur_ch_num_samples = 0;
             }
-      
+
             float sample = cur_ch_samples[i];
             (*cur_ch_peak) = fmaxf((*cur_ch_peak), fabs(sample));
             (*cur_ch_rms) += sample * sample;
             ++cur_ch_num_samples;
         }
     }
-    
+
     dr->_processed_samples = cur_ch_num_samples;
-    dr->length = cur_ch_length;   
+    dr->length = cur_ch_length;
 }
 
-void merge_sort(float* values, size_t length)
+int compare_samples(const void *s1, const void *s2)
 {
-    size_t half_length = length/2;
-    float* a = values;
-    float* b = values + half_length;
-    
-    if(length > 2)
-    {
-        merge_sort(a, half_length);
-        merge_sort(b, length - half_length);
-    }
-    
-    if(length == 1)
-        return;
-    
-    float* temp = (float*)malloc(sizeof(float)*length);
-    
-    for(size_t i = 0, j = 0, k = 0; k != length; ++k)
-    {
-        if((i < half_length) && ((j == (length-half_length)) || (a[i] > b[j])))
-        {
-            temp[k] = a[i];
-            i++;
-        }
-        else
-        {
-            temp[k] = b[j];
-            j++;
-        }
-    }
-    
-    memcpy(values, temp, length*sizeof(float));    
-    free(temp);
+    float rms1 = *(float*)s1;
+    float rms2 = *(float*)s2;
+    if (rms1 > rms2) return -1;
+    else if (rms1 < rms2) return 1;
+    return 0;
 }
 
 void finish_dr(dr_t* dr, info_t* info)
@@ -172,22 +203,28 @@ void finish_dr(dr_t* dr, info_t* info)
     {
         dr->channel_rms[channel][dr->length] = sqrtf((2.0 * dr->channel_rms[channel][dr->length]) / dr->_processed_samples);
 
-        merge_sort(dr->channel_rms[channel], dr->length);
+        qsort ((void*)dr->channel_rms[channel], dr->length, sizeof(float), compare_samples);
 
         size_t values_to_sample = dr->length / 5;
         values_to_sample = (values_to_sample ? values_to_sample : 1);
 
-        
         float rms_sum = 0.0f;
-        float second_max_value = -100.0;
-        float max_value = -100.0;
         for(size_t i = 0; i != values_to_sample; ++i)
         {
             float rms_value = dr->channel_rms[channel][i];
-            float peak = dr->channel_peak[channel][i];
-            
+
             rms_sum += rms_value * rms_value;
-            
+        }
+
+        float rms_total = 0.0f;
+        float second_max_value = -100.0;
+        float max_value = -100.0;
+        for(size_t i = 0; i != dr->length; ++i)
+        {
+            float rms_value = dr->channel_rms[channel][i];
+            float peak = dr->channel_peak[channel][i];
+            rms_total += rms_value * rms_value;
+
             if(peak >= max_value)
             {
                 second_max_value = max_value;
@@ -200,6 +237,7 @@ void finish_dr(dr_t* dr, info_t* info)
         }
 
         rms_sum = sqrtf(rms_sum / values_to_sample);
+        rms_total = sqrtf(rms_total / dr->length);
 
         if(values_to_sample < 3)
         {

@@ -24,219 +24,132 @@
 
 #include "libavcodec/avcodec.h"
 #include "libavutil/samplefmt.h"
+#include "libavresample/avresample.h"
 
 #include <stdlib.h>
 #include <stdint.h>
 
+static char* get_error_text(const int error)
+{
+    static char error_buffer[255];
+    av_strerror(error, error_buffer, sizeof(error_buffer));
+    return error_buffer;
+}
+
 audio_samples_t* alloc_audio_samples(void)
 {
     audio_samples_t* result = (audio_samples_t*)malloc(sizeof(audio_samples_t));
+
+    if(result == NULL)
+        return NULL;
+
     result->samples = NULL;
     return result;
-    
+
+}
+
+void free_audio_samples_data(audio_samples_t* samples)
+{
+    if(samples->samples != NULL)
+    {
+        for(size_t i = 0; i != samples->num_channels; ++i)
+        {
+            free(samples->samples[i]);
+        }
+        free(samples->samples);
+        samples->samples = NULL;
+    }
 }
 
 void free_audio_samples(audio_samples_t* samples)
 {
+    free_audio_samples_data(samples);
     free(samples);
 }
 
-float** normalize_int16_t_samples(uint8_t** samples, info_t* info, size_t num_samples)
+int get_samples(audio_samples_t* samples, file_t* file, info_t* info)
 {
-    int16_t** converted_input = (int16_t**)samples;
-    float** normalized_data = (float**)malloc(info->num_channels * sizeof(float*));
+    int error;
+    AVPacket input_packet;
 
-    for(size_t channel = 0; channel != info->num_channels; ++channel)
+    /**
+    * https://github.com/libav/libav/blob/master/doc/examples/transcode_aac.c
+    **/
+    av_init_packet(&input_packet);
+    input_packet.data = NULL;
+    input_packet.size = 0;
+
+    if((error = av_read_frame(file->format_context, &input_packet)) < 0)
     {
-        normalized_data[channel] = (float*)malloc(num_samples * sizeof(float));
-        for(size_t i = 0; i != num_samples; ++i)
+        if (error == AVERROR_EOF)
+            return -2;
+        else
         {
-            // Add on 0.5 here because singed integer types aren't +/- balanced
-            normalized_data[channel][i] = ((float)(converted_input[channel][i]) + 0.5f) / 32767.5f;
+            fprintf(stderr, "Could not read frame (error '%s')\n",
+                    get_error_text(error));
+            return -1;
         }
     }
 
-    return normalized_data;
-}
-
-float** normalize_int32_t_samples(uint8_t** samples, info_t* info, size_t num_samples)
-{
-    int32_t** converted_input = (int32_t**)samples;
-    float** normalized_data = (float**)malloc(info->num_channels * sizeof(float*));
-
-    for(size_t channel = 0; channel != info->num_channels; ++channel)
-    {
-        normalized_data[channel] = (float*)malloc(num_samples * sizeof(float));
-        for(size_t i = 0; i != num_samples; ++i)
-        {
-            normalized_data[channel][i] = ((float)(converted_input[channel][i]) + 0.5f) / 2147483647.5f;
-        }
+    if(input_packet.stream_index != file->stream->index){
+        return 0;
     }
 
-    return normalized_data;
-}
-
-float** normalize_float_samples(uint8_t** samples, info_t* info, size_t num_samples)
-{
-    float** normalized_data = (float**)malloc(info->num_channels * sizeof(float*));
-
-    for(size_t channel = 0; channel != info->num_channels; ++channel)
-    {
-        normalized_data[channel] = (float*)malloc(num_samples * sizeof(float));
-
-        memcpy(normalized_data[channel], samples[channel], num_samples*sizeof(float));
-    }
-
-    return normalized_data;
-}
-
-float** normalize_double_samples(uint8_t** samples, info_t* info, size_t num_samples)
-{
-    double** converted_input = (double**)samples;
-    float** normalized_data = (float**)malloc(info->num_channels * sizeof(float*));
-
-    for(size_t channel = 0; channel != info->num_channels; ++channel)
-    {
-        normalized_data[channel] = (float*)malloc(num_samples * sizeof(float));
-
-        for(size_t i = 0; i != num_samples; ++i)
-        {
-            normalized_data[channel][i] = (float)(converted_input[channel][i]);
-        }
-    }
-
-    return normalized_data;
-}
-
-uint8_t** split_interleaved_data(uint8_t** data, info_t* info, size_t total_bytes, uint8_t bytes_per_sample)
-{
-    uint8_t num_channels = info->num_channels;
-    uint8_t** channel_samples = (uint8_t**)malloc(sizeof(uint8_t*)*num_channels);
-    size_t bytes_per_channel = total_bytes / num_channels;
-
-    for(size_t channel = 0; channel != num_channels; ++channel)
-    {
-        channel_samples[channel] = (uint8_t*)malloc(sizeof(uint8_t)*bytes_per_channel);
-        uint8_t* initial_offset = data[0] + (channel * bytes_per_sample);
-
-        for(size_t i = 0; i != bytes_per_channel; i += bytes_per_sample)
-        {
-            uint8_t* src = initial_offset + (i * num_channels);
-            uint8_t* dst = channel_samples[channel] + i;
-            memcpy(dst, src, bytes_per_sample);
-        }
-    }
-
-    return channel_samples;
-}
-
-uint8_t** copy_planar_data(uint8_t** data, info_t* info, size_t total_bytes, uint8_t bytes_per_sample)
-{
-    uint8_t num_channels = info->num_channels;
-    uint8_t** channel_samples = (uint8_t**)malloc(sizeof(uint8_t*)*info->num_channels);
-    size_t bytes_per_channel = total_bytes / num_channels;
-    for(size_t channel = 0; channel != num_channels; ++channel)
-    {
-        channel_samples[channel] = (uint8_t*)malloc(sizeof(uint8_t)*bytes_per_channel);
-        memcpy(channel_samples[channel], data[channel], bytes_per_channel);
-    }
-
-    return channel_samples;
-}
-
-audio_samples_t* get_samples(audio_samples_t* samples, file_t* file, info_t* info)
-{
-    AVCodec* codec = avcodec_find_decoder(file->codec_context->codec_id);
-
-    if (avcodec_open2(file->codec_context, codec, NULL) < 0)
-        return NULL;
-
-    AVPacket packet;
     int decoded;
-
-    enum AVSampleFormat sample_format = file->codec_context->sample_fmt;
+    AVCodecContext* cc = file->codec_context;
     AVFrame* frame = avcodec_alloc_frame();
+    avcodec_get_frame_defaults(frame);
 
-    if(av_read_frame(file->format_context, &packet) != 0)
-        return NULL;
-
-    avcodec_decode_audio4(file->codec_context, frame, &decoded, &packet);
+    if((error = avcodec_decode_audio4(file->codec_context, frame,
+                                      &decoded, &input_packet)) < 0)
+    {
+        fprintf(stderr, "Could not decode frame (error '%s')\n",
+                get_error_text(error));
+        av_free_packet(&input_packet);
+        return -1;
+    }
 
     if(decoded != 0)
     {
-        if(frame->format != sample_format)
-            return NULL;
+        if((frame->format != cc->sample_fmt) ||
+           (frame->channel_layout != cc->channel_layout) ||
+           (frame->sample_rate != cc->sample_rate))
+            return -1;
     }
     else
     {
-        return NULL;
+        return 0;
     }
 
-    int total_bytes = av_samples_get_buffer_size(NULL, info->num_channels, frame->nb_samples, sample_format, 1);
-    uint8_t bytes_per_sample = (uint8_t)av_get_bytes_per_sample(sample_format);
+    // From here on, frame characteristics are known the match codec context characteristics, so we can resample based on that.
+
+    int total_bytes = av_samples_get_buffer_size(NULL, info->num_channels, frame->nb_samples, cc->sample_fmt, 1);
+    uint8_t bytes_per_sample = (uint8_t)av_get_bytes_per_sample(cc->sample_fmt);
 
     samples->length = total_bytes / (info->num_channels * bytes_per_sample);
+    samples->num_channels = info->num_channels;
 
-    uint8_t** data_by_channel = NULL;
-    //Split interleaved data into separate buffers for each channel.
-    if((sample_format == AV_SAMPLE_FMT_S16) ||
-       (sample_format == AV_SAMPLE_FMT_S32) ||
-       (sample_format == AV_SAMPLE_FMT_FLT) ||
-       (sample_format == AV_SAMPLE_FMT_DBL))
+    uint8_t** output_data = (uint8_t**)malloc(info->num_channels * sizeof(uint8_t*));
+
+    for(size_t i = 0; i != info->num_channels; ++i)
     {
-        data_by_channel = split_interleaved_data(frame->data, info, total_bytes, bytes_per_sample);
-    }
-    else if((sample_format == AV_SAMPLE_FMT_S16P) ||
-            (sample_format == AV_SAMPLE_FMT_S32P) ||
-            (sample_format == AV_SAMPLE_FMT_FLTP) ||
-            (sample_format == AV_SAMPLE_FMT_DBLP))
-    {
-        data_by_channel = copy_planar_data(frame->data, info, total_bytes, bytes_per_sample);
-    }
-    else
-    {
-        return NULL;
+        output_data[i] = (uint8_t*)malloc(samples->length * sizeof(float));
     }
 
-    //free the frame and its data here - we've got a copy in planar form
-    free(samples->samples); //free samples if they've been allocated before.
+    // Use avresample to get data in planar float form, for later processing
+    avresample_convert(file->resample_context, output_data, 0, samples->length, frame->data, 0, frame->nb_samples);
 
-    //This bit converts samples from whatever format they were originally in, to a float between 0.0 and 1.0.
-    switch(sample_format)
-    {
-      case AV_SAMPLE_FMT_S16:
-      case AV_SAMPLE_FMT_S16P:
-        samples->samples = normalize_int16_t_samples(data_by_channel, info, samples->length);
-        break;
-      case AV_SAMPLE_FMT_S32:
-      case AV_SAMPLE_FMT_S32P:
-        samples->samples = normalize_int32_t_samples(data_by_channel, info, samples->length);
-        break;
-      case AV_SAMPLE_FMT_FLT:
-      case AV_SAMPLE_FMT_FLTP:
-        samples->samples = normalize_float_samples(data_by_channel, info, samples->length);
-        break;
-      case AV_SAMPLE_FMT_DBL:
-      case AV_SAMPLE_FMT_DBLP:
-        samples->samples = normalize_double_samples(data_by_channel, info, samples->length);
-        break;
-      default:
-        //Shouldn't ever get here.
-        break;
-    }
+    free_audio_samples_data(samples);
 
-    //free planar data allocated earlier, since we have it normalized now.
-    for(size_t channel = 0; channel != info->num_channels; ++channel)
-    {
-        free(data_by_channel[channel]);
-    }
-    free(data_by_channel);
+    samples->samples = (float**)output_data;
 
-#if (LIBAVCODEC_VERSION_MAJOR > 53)
+#if (LIBAVCODEC_VERSION_MAJOR > 54)
     avcodec_free_frame(&frame);
 #else
     av_free(frame);
 #endif
 
-    return samples;
+    av_free_packet(&input_packet);
+
+    return decoded;
 }

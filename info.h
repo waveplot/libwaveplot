@@ -17,11 +17,14 @@
  * along with libwaveplot. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef __LIBWP_INFO_H__
+#define __LIBWP_INFO_H__
+
 #include <stdint.h>
 
-typedef struct file_t_t file_t;
+#include "typedefs.h"
 
-typedef struct info_t_t
+struct info_t_t
 {
     uint32_t duration_secs;
 
@@ -32,10 +35,12 @@ typedef struct info_t_t
     uint32_t sample_rate;
 
     char* file_format;
-} info_t;
+};
 
 /* For allocating and freeing information structures */
 info_t* alloc_info(void);
 void free_info(info_t* info);
 
 void get_info(info_t* info, file_t* file);
+
+#endif //__LIBWP_INFO_H__

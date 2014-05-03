@@ -17,22 +17,13 @@
  * along with libwaveplot. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __LIBWP_AUDIO_H__
-#define __LIBWP_AUDIO_H__
+#ifndef __LIBWP_TYPEDEFS_H__
+#define __LIBWP_TYPEDEFS_H__
 
-#include <string.h>
+typedef struct file_t_t file_t;
+typedef struct info_t_t info_t;
+typedef struct audio_samples_t_t audio_samples_t;
+typedef struct waveplot_t_t waveplot_t;
+typedef struct dr_t_t dr_t;
 
-#include "typedefs.h"
-
-struct audio_samples_t_t
-{
-    float** samples;
-    size_t num_channels;
-    size_t length;
-};
-
-audio_samples_t* alloc_audio_samples(void);
-void free_audio_samples(audio_samples_t* file);
-int get_samples(audio_samples_t* samples, file_t* file, info_t* info);
-
-#endif //__LIBWP_AUDIO_H__
+#endif //__LIBWP_TYPEDEFS_H__

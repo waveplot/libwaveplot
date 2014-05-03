@@ -17,21 +17,25 @@
  * along with libwaveplot. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef __LIBWP_WAVEPLOT_H__
+#define __LIBWP_WAVEPLOT_H__
+
 #include <stdlib.h>
 
-typedef struct audio_samples_t_t audio_samples_t;
-typedef struct info_t_t info_t;
+#include "typedefs.h"
 
-typedef struct waveplot_t_t
+struct waveplot_t_t
 {
     float* values;
     size_t length;
-    
+
     size_t _capacity;
-} waveplot_t;
+};
 
 
 waveplot_t* alloc_waveplot(void);
 void free_waveplot(waveplot_t* waveplot);
 void update_waveplot(waveplot_t* waveplot, audio_samples_t* samples, info_t* info);
 void finish_waveplot(waveplot_t* waveplot);
+
+#endif //__LIBWP_WAVEPLOT_H__

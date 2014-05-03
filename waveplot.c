@@ -29,15 +29,19 @@
 waveplot_t* alloc_waveplot(void)
 {
     waveplot_t* result = (waveplot_t*)malloc(sizeof(waveplot_t));
+
+    if(result == NULL)
+        return NULL;
+
     result->length = 0;
-    
+
     /* Assume song likely to be less than four minutes
      * 4 mins * 60 secs = 240 secs, 240 secs * 4 Hz = 960 chunks
      */
     result->_capacity = 1024;
     result->values = (float*)malloc(sizeof(float) * result->_capacity);
     return result;
-    
+
 }
 
 void free_waveplot(waveplot_t* waveplot)
@@ -74,7 +78,7 @@ void update_waveplot(waveplot_t* waveplot, audio_samples_t* samples, info_t* inf
         {
             combined_channels += fabs(samples->samples[channel][i]);
         }
-        
+
         if(current_chunk_samples == samples_per_chunk)
         {
             waveplot->values[waveplot->length] = current_chunk;
@@ -94,12 +98,12 @@ void finish_waveplot(waveplot_t* waveplot)
     static const float sample_weightings[] = {10.0, 8.0, 5.0, 3.0};
     static const size_t num_weightings = sizeof(sample_weightings)/sizeof(float);
     float* processed = (float*)malloc(sizeof(float) * waveplot->_capacity);
-    
+
     for(size_t i = 0; i != waveplot->length; ++i)
     {
         processed[i] = 0.0f;
     }
-    
+
     for(size_t i = 0; i != waveplot->length; ++i)
     {
         float chunk = waveplot->values[i];
@@ -119,19 +123,19 @@ void finish_waveplot(waveplot_t* waveplot)
             }
         }
     }
-    
+
     float max_chunk = 0.0f;
     for(size_t i = 0; i != waveplot->length; ++i)
     {
         max_chunk = fmaxf(processed[i], max_chunk);
     }
-   
+
 
     for(size_t i = 0; i != waveplot->length; ++i)
     {
         processed[i] /= max_chunk;
     }
-    
+
     free(waveplot->values);
     waveplot->values = processed;
 }

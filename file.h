@@ -16,13 +16,17 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with libwaveplot. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
+#ifndef __LIBWP_FILE_H__
+#define __LIBWP_FILE_H__
+
 #include "libavcodec/avcodec.h"
 #include "libavformat/avformat.h"
+#include "libavresample/avresample.h"
 
-typedef struct info_t_t info_t;
+#include "typedefs.h"
 
-typedef struct file_t_t
+struct file_t_t
 {
     char* path;
 
@@ -30,8 +34,9 @@ typedef struct file_t_t
     AVCodecContext* codec_context;
     AVCodec* codec;
     AVFormatContext* format_context;
+    AVAudioResampleContext* resample_context;
 
-} file_t;
+};
 
 /* Initialize WavePlot and libav */
 void init(void);
@@ -42,3 +47,5 @@ void free_file(file_t*);
 
 /* Load a file with libav, into an allocated file structure. */
 int load_file(char*, file_t*);
+
+#endif //__LIBWP_FILE_H__
