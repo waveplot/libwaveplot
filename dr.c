@@ -35,8 +35,6 @@
  * http://www.dynamicrange.de/sites/default/files/Measuring%20DR%20ENv3.pdf
  */
 
-void merge_sort(float* values, size_t length);
-
 dr_t* alloc_dr(void)
 {
     dr_t* result = (dr_t*)malloc(sizeof(dr_t));
