@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include "dllexport.h"
 #include "typedefs.h"
 
 struct audio_samples_t_t
@@ -31,8 +32,8 @@ struct audio_samples_t_t
 	size_t length;
 };
 
-audio_samples_t* alloc_audio_samples(void);
-void free_audio_samples(audio_samples_t* file);
-int get_samples(audio_samples_t* samples, file_t* file, info_t* info);
+LIBWAVEPLOT_API audio_samples_t* alloc_audio_samples(void);
+LIBWAVEPLOT_API void free_audio_samples(audio_samples_t* file);
+LIBWAVEPLOT_API int get_samples(audio_samples_t* samples, file_t* file, info_t* info);
 
 #endif //__LIBWP_AUDIO_H__

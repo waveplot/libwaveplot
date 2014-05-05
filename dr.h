@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 
+#include "dllexport.h"
 #include "typedefs.h"
 
 struct dr_t_t
@@ -37,10 +38,10 @@ struct dr_t_t
 	size_t _processed_samples;
 };
 
-dr_t* alloc_dr(void);
-void free_dr(dr_t* dr);
-void init_dr(dr_t* dr, info_t* info);
-void update_dr(dr_t* dr_data, audio_samples_t* samples, info_t* info);
-void finish_dr(dr_t* dr, info_t* info);
+LIBWAVEPLOT_API dr_t* alloc_dr(void);
+LIBWAVEPLOT_API void free_dr(dr_t* dr);
+LIBWAVEPLOT_API void init_dr(dr_t* dr, info_t* info);
+LIBWAVEPLOT_API void update_dr(dr_t* dr_data, audio_samples_t* samples, info_t* info);
+LIBWAVEPLOT_API void finish_dr(dr_t* dr, info_t* info);
 
 #endif //__LIBWP_DR_H__

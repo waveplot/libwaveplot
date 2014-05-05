@@ -28,8 +28,10 @@
 
 #include <stdio.h>
 
+#ifdef min
+#undef min
 #define min(a, b) ((a) < (b) ? (a) : (b))
-
+#endif
 /*
  * Implemented based on:
  * http://www.dynamicrange.de/sites/default/files/Measuring%20DR%20ENv3.pdf
@@ -123,7 +125,7 @@ void update_dr(dr_t* dr, audio_samples_t* samples, info_t* info)
 
 		if(relative_new_size >= 1.0)
 		{
-			size_t new_buffer_size = dr->_capacity * pow(2, ceil(log(relative_new_size+1.0)/log(2)));
+			size_t new_buffer_size = dr->_capacity * (size_t)powf(2.0f, ceilf(logf(relative_new_size+1.0f)/logf(2.0f)));
 
 			// Increase the length of the container by 2, and copy the old data
 			dr->_capacity = new_buffer_size;
@@ -164,7 +166,7 @@ void update_dr(dr_t* dr, audio_samples_t* samples, info_t* info)
 		{
 			if(cur_ch_num_samples == samples_per_chunk)
 			{
-				(*cur_ch_rms) = sqrtf((2.0 * (*cur_ch_rms)) / samples_per_chunk);
+				(*cur_ch_rms) = sqrtf((2.0f * (*cur_ch_rms)) / samples_per_chunk);
 
 				++cur_ch_length;
 
@@ -175,7 +177,7 @@ void update_dr(dr_t* dr, audio_samples_t* samples, info_t* info)
 			}
 
 			float sample = cur_ch_samples[i];
-			(*cur_ch_peak) = fmaxf((*cur_ch_peak), fabs(sample));
+			(*cur_ch_peak) = fmaxf((*cur_ch_peak), fabsf(sample));
 			(*cur_ch_rms) += sample * sample;
 			++cur_ch_num_samples;
 		}
@@ -199,7 +201,7 @@ void finish_dr(dr_t* dr, info_t* info)
 	dr->rating = 0.0f;
 	for(size_t channel = 0; channel != info->num_channels; ++channel)
 	{
-		dr->channel_rms[channel][dr->length] = sqrtf((2.0 * dr->channel_rms[channel][dr->length]) / dr->_processed_samples);
+		dr->channel_rms[channel][dr->length] = sqrtf((2.0f * dr->channel_rms[channel][dr->length]) / dr->_processed_samples);
 
 		qsort ((void*)dr->channel_rms[channel], dr->length, sizeof(float), compare_samples);
 

@@ -24,6 +24,7 @@
 #include "libavformat/avformat.h"
 #include "libavresample/avresample.h"
 
+#include "dllexport.h"
 #include "typedefs.h"
 
 struct file_t_t
@@ -39,13 +40,13 @@ struct file_t_t
 };
 
 /* Initialize WavePlot and libav */
-void init(void);
+LIBWAVEPLOT_API void init(void);
 
 /* Allocate storage for a file structure, and deallocate. */
-file_t* alloc_file(void);
-void free_file(file_t*);
+LIBWAVEPLOT_API file_t* alloc_file(void);
+LIBWAVEPLOT_API void free_file(file_t*);
 
 /* Load a file with libav, into an allocated file structure. */
-int load_file(char*, file_t*);
+LIBWAVEPLOT_API int load_file(char*, file_t*);
 
 #endif //__LIBWP_FILE_H__

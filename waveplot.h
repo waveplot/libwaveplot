@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 
+#include "dllexport.h"
 #include "typedefs.h"
 
 struct waveplot_t_t
@@ -33,9 +34,9 @@ struct waveplot_t_t
 };
 
 
-waveplot_t* alloc_waveplot(void);
-void free_waveplot(waveplot_t* waveplot);
-void update_waveplot(waveplot_t* waveplot, audio_samples_t* samples, info_t* info);
-void finish_waveplot(waveplot_t* waveplot);
+LIBWAVEPLOT_API waveplot_t* alloc_waveplot(void);
+LIBWAVEPLOT_API void free_waveplot(waveplot_t* waveplot);
+LIBWAVEPLOT_API void update_waveplot(waveplot_t* waveplot, audio_samples_t* samples, info_t* info);
+LIBWAVEPLOT_API void finish_waveplot(waveplot_t* waveplot);
 
 #endif //__LIBWP_WAVEPLOT_H__

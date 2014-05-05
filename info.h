@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 
+#include "dllexport.h"
 #include "typedefs.h"
 
 struct info_t_t
@@ -38,9 +39,9 @@ struct info_t_t
 };
 
 /* For allocating and freeing information structures */
-info_t* alloc_info(void);
-void free_info(info_t* info);
+LIBWAVEPLOT_API info_t* alloc_info(void);
+LIBWAVEPLOT_API void free_info(info_t* info);
 
-void get_info(info_t* info, file_t* file);
+LIBWAVEPLOT_API void get_info(info_t* info, file_t* file);
 
 #endif //__LIBWP_INFO_H__
