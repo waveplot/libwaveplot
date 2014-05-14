@@ -22,9 +22,9 @@
 
 #ifdef WIN32
 #ifdef LIBWAVEPLOT_EXPORTS
-#define LIBWAVEPLOT_API __declspec(dllexport) 
+#define LIBWAVEPLOT_API __declspec(dllexport)
 #else
-#define LIBWAVEPLOT_API __declspec(dllimport) 
+#define LIBWAVEPLOT_API __declspec(dllimport)
 #endif
 #else
 #define LIBWAVEPLOT_API
