@@ -30,8 +30,10 @@
 
 #ifdef min
 #undef min
-#define min(a, b) ((a) < (b) ? (a) : (b))
 #endif
+
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
 /*
  * Implemented based on:
  * http://www.dynamicrange.de/sites/default/files/Measuring%20DR%20ENv3.pdf

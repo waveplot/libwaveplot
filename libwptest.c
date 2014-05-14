@@ -38,6 +38,8 @@ int main(int argc, char* argv[])
 	finish_waveplot(w);
 	finish_dr(d,i);
 
+	resample_waveplot(w, 50, (int)(21 / 2));
+
 	printf("DR: %8.4f\n",d->rating);
 
 	free_dr(d);

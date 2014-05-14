@@ -26,6 +26,14 @@
 #include <stdint.h>
 #include <math.h>
 
+#ifdef min
+#undef min
+#endif
+
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
+#define WAVEPLOT_RESOLUTION 200.0f
+
 waveplot_t* alloc_waveplot(void)
 {
 	waveplot_t* result = (waveplot_t*)malloc(sizeof(waveplot_t));
@@ -34,6 +42,7 @@ waveplot_t* alloc_waveplot(void)
 		return NULL;
 
 	result->length = 0;
+	result->resample = NULL;
 
 	/* Assume song likely to be less than four minutes
 	 * 4 mins * 60 secs = 240 secs, 240 secs * 4 Hz = 960 chunks
@@ -46,6 +55,9 @@ waveplot_t* alloc_waveplot(void)
 
 void free_waveplot(waveplot_t* waveplot)
 {
+	if(waveplot->resample != NULL)
+		free(waveplot->resample);
+
 	free(waveplot->values);
 	free(waveplot);
 }
@@ -140,4 +152,52 @@ void finish_waveplot(waveplot_t* waveplot)
 
 	free(waveplot->values);
 	waveplot->values = processed;
+}
+
+void resample_waveplot(waveplot_t* waveplot, size_t target_length, size_t target_amplitude)
+{
+	float resample_factor = (float)(waveplot->length)/target_length;
+
+	if(waveplot->resample != NULL)
+		free(waveplot->resample);
+
+	waveplot->resample = (float*)malloc(target_length*sizeof(float));
+
+	if(waveplot->resample == NULL)
+		return;
+
+	if(resample_factor > 1.0f)
+	{
+		float current_weighting = resample_factor;
+		float current_value = 0.0f;
+
+		size_t target_index = 0;
+		for(size_t i = 0; i != waveplot->length; ++i)
+		{
+			float value = floorf(WAVEPLOT_RESOLUTION * waveplot->values[i]);
+
+			current_value += value * min(current_weighting, 1.0f);
+			current_weighting -= 1.0f;
+
+			if(current_weighting <= 0.0f)
+			{
+				waveplot->resample[target_index] = current_value / resample_factor;
+				++target_index;
+				current_value = -value * current_weighting;
+				current_weighting += resample_factor;
+			}
+
+		}
+	}
+	else
+	{
+		memcpy(waveplot->resample, waveplot->values, waveplot->length * sizeof(float));
+	}
+
+	float amplitude_factor = (float)(target_amplitude) / WAVEPLOT_RESOLUTION;
+
+	for(size_t i = 0; i != target_length; ++i)
+	{
+		waveplot->resample[i] = floorf((waveplot->resample[i] * amplitude_factor) + 0.5f);
+	}
 }

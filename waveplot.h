@@ -28,6 +28,7 @@
 struct waveplot_t_t
 {
 	float* values;
+	float* resample;
 	size_t length;
 
 	size_t _capacity;
@@ -38,5 +39,6 @@ LIBWAVEPLOT_API waveplot_t* alloc_waveplot(void);
 LIBWAVEPLOT_API void free_waveplot(waveplot_t* waveplot);
 LIBWAVEPLOT_API void update_waveplot(waveplot_t* waveplot, audio_samples_t* samples, info_t* info);
 LIBWAVEPLOT_API void finish_waveplot(waveplot_t* waveplot);
+LIBWAVEPLOT_API void resample_waveplot(waveplot_t* waveplot, size_t target_length, size_t target_amplitude);
 
 #endif //__LIBWP_WAVEPLOT_H__
