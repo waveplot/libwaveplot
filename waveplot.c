@@ -166,31 +166,42 @@ void resample_waveplot(waveplot_t* waveplot, size_t target_length, size_t target
 	if(waveplot->resample == NULL)
 		return;
 
+	//printf("%f\n",resample_factor);
+
+	//Check whether it's a down-sample
 	if(resample_factor > 1.0f)
 	{
-		float current_weighting = resample_factor;
-		float current_value = 0.0f;
-
-		size_t target_index = 0;
-		for(size_t i = 0; i != waveplot->length; ++i)
+		float end_frac = 0.0f, end = 0.0f;
+		for(size_t i = 0; i != target_length; ++i)
 		{
-			float value = floorf(WAVEPLOT_RESOLUTION * waveplot->values[i]);
+			float start_frac = end_frac;
+			float start = end;
+			end_frac = modff(resample_factor * (i+1), &end);
 
-			current_value += value * min(current_weighting, 1.0f);
-			current_weighting -= 1.0f;
+			float value = floorf(WAVEPLOT_RESOLUTION * waveplot->values[(size_t)start]);
 
-			if(current_weighting <= 0.0f)
+			waveplot->resample[i] = value * (1.0f-start_frac);
+
+			for(size_t j = (size_t)start + 1; j != end; ++j)
 			{
-				waveplot->resample[target_index] = current_value / resample_factor;
-				++target_index;
-				current_value = -value * current_weighting;
-				current_weighting += resample_factor;
+				value = floorf(WAVEPLOT_RESOLUTION * waveplot->values[j]);
+				waveplot->resample[i] += value;
 			}
 
+			if((size_t)end != waveplot->length)
+			{
+				value = floorf(WAVEPLOT_RESOLUTION * waveplot->values[(size_t)end]);
+				waveplot->resample[i] += value * end_frac;
+			}
+
+			waveplot->resample[i] /= resample_factor;
 		}
 	}
 	else
 	{
+		for(size_t i = 0; i != target_length; ++i)
+			waveplot->resample[i] = 0.0f;
+
 		memcpy(waveplot->resample, waveplot->values, waveplot->length * sizeof(float));
 	}
 
