@@ -32,6 +32,8 @@ struct waveplot_t_t
 	size_t length;
 
 	size_t _capacity;
+	size_t _current_chunk_samples;
+	float _current_chunk;
 };
 
 

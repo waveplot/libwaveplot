@@ -43,6 +43,8 @@ waveplot_t* alloc_waveplot(void)
 
 	result->length = 0;
 	result->resample = NULL;
+	result->_current_chunk_samples = 0;
+	result->_current_chunk = 0.0f;
 
 	/* Assume song likely to be less than four minutes
 	 * 4 mins * 60 secs = 240 secs, 240 secs * 4 Hz = 960 chunks
@@ -64,12 +66,10 @@ void free_waveplot(waveplot_t* waveplot)
 
 void update_waveplot(waveplot_t* waveplot, audio_samples_t* samples, info_t* info)
 {
-	static uint32_t current_chunk_samples = 0;
-	static float current_chunk = 0.0;
 	uint32_t samples_per_chunk = (info->sample_rate / 4);
 
 	// Check whether there are too many samples for the current chunk
-	if((samples->length + current_chunk_samples) > samples_per_chunk)
+	if((samples->length + waveplot->_current_chunk_samples) > samples_per_chunk)
 	{
 		// New chunk - check whether the container needs a resize
 		if(waveplot->length == waveplot->_capacity)
@@ -86,23 +86,25 @@ void update_waveplot(waveplot_t* waveplot, audio_samples_t* samples, info_t* inf
 	for(size_t i = 0; i != samples->length; ++i)
 	{
 		float combined_channels = 0.0f;
+
 		for(size_t channel = 0; channel != info->num_channels; ++channel)
 		{
 			combined_channels += fabs(samples->samples[channel][i]);
 		}
 
-		if(current_chunk_samples == samples_per_chunk)
+		if(waveplot->_current_chunk_samples == samples_per_chunk)
 		{
-			waveplot->values[waveplot->length] = current_chunk;
+			waveplot->values[waveplot->length] = waveplot->_current_chunk;
 			++waveplot->length;
 
-			current_chunk = 0.0;
-			current_chunk_samples = 0;
+			waveplot->_current_chunk = 0.0;
+			waveplot->_current_chunk_samples = 0;
 		}
 
-		current_chunk += combined_channels;
-		++current_chunk_samples;
+		waveplot->_current_chunk += combined_channels;
+		++waveplot->_current_chunk_samples;
 	}
+
 }
 
 void finish_waveplot(waveplot_t* waveplot)
