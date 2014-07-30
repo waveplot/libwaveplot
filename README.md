@@ -15,11 +15,11 @@ allows other C/C++ applications to use libwaveplot functions directly.
 Compiling
 =========
 
-The included Makefile can be used to compile libwaveplot or libwptest (testing
-application):
+The library uses a fairly standard procedure for building libraries on Unix:
+    
+    configure
+    make
+    make install
 
-    make libwaveplot
-    make libwptest
-
-In order to successfully build these targets, a recent version of libav will
-need to be installed on your machine.
+In order to successfully generate a Makefile, a recent version of libavcodec,
+libavformat and libavresample will need to be installed on your machine.
