@@ -15,8 +15,7 @@ AC_PROG_CC
 
 # Checks for header files.
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h])
-AC_CHECK_HEADERS([libavcodec/avcodec.h libavformat/avformat.h
-                  libavresample/avresample.h])
+AC_CHECK_HEADERS([libavcodec/avcodec.h libavformat/avformat.h libavresample/avresample.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
