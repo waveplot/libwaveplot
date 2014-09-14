@@ -9,7 +9,7 @@ AM_CFLAGS = -std=c99 -O3 -Wall -Wextra -Wpedantic
 # the previous manual Makefile
 lib_LTLIBRARIES = libwaveplot.la
 libwaveplot_la_SOURCES = audio.c audio.h dllexport.h dr.c dr.h file.c file.h info.c info.h typedefs.h waveplot.c waveplot.h
-libwaveplot_la_LDFLAGS = -version-info 0:0:0 -lm -lavutil -lavcodec -lavformat -lavresample
+libwaveplot_la_LDFLAGS = -version-info 1:0:1 -lm -lavutil -lavcodec -lavformat -lavresample
 
 install-exec-hook:
 	find $(DESTDIR)$(libdir) -type f -name \*.la -delete

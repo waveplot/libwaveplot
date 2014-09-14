@@ -26,6 +26,8 @@
 #include <stdint.h>
 #include <math.h>
 
+#include "libavutil/avutil.h"
+
 #ifdef min
 #undef min
 #endif
