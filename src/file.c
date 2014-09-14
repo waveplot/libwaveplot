@@ -30,18 +30,6 @@ static char* get_error_text(const int error)
 	return error_buffer;
 }
 
-void init(void)
-{
-	av_register_all();
-
-	av_log_set_level(AV_LOG_ERROR);
-}
-
-const char* version(void)
-{
-	return "DAMSON";
-}
-
 file_t* alloc_file(void)
 {
 	file_t* result = (file_t*)malloc(sizeof(file_t));

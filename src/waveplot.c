@@ -34,6 +34,18 @@
 
 #define WAVEPLOT_RESOLUTION 200.0f
 
+void init(void)
+{
+	av_register_all();
+
+	av_log_set_level(AV_LOG_ERROR);
+}
+
+const char* version(void)
+{
+	return "DAMSON";
+}
+
 waveplot_t* alloc_waveplot(void)
 {
 	waveplot_t* result = (waveplot_t*)malloc(sizeof(waveplot_t));

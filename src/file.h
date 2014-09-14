@@ -39,9 +39,6 @@ struct file_t_t
 
 };
 
-/* Initialize WavePlot and libav */
-LIBWAVEPLOT_API void init(void);
-
 /* Allocate storage for a file structure, and deallocate. */
 LIBWAVEPLOT_API file_t* alloc_file(void);
 LIBWAVEPLOT_API void free_file(file_t*);

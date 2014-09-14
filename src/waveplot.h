@@ -37,6 +37,12 @@ struct waveplot_t_t
 };
 
 
+/* Initialize WavePlot and libav */
+LIBWAVEPLOT_API void init(void);
+
+/* Get version information */
+LIBWAVEPLOT_API const char* version(void);
+
 LIBWAVEPLOT_API waveplot_t* alloc_waveplot(void);
 LIBWAVEPLOT_API void free_waveplot(waveplot_t* waveplot);
 LIBWAVEPLOT_API void update_waveplot(waveplot_t* waveplot, audio_samples_t* samples, info_t* info);
