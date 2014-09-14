@@ -226,3 +226,23 @@ void resample_waveplot(waveplot_t* waveplot, size_t target_length, size_t target
 		waveplot->resample[i] = floorf((waveplot->resample[i] * amplitude_factor) + 0.5f);
 	}
 }
+
+unsigned int generate_sonic_hash(waveplot_t* waveplot)
+{
+    resample_waveplot(waveplot, 16, (size_t)WAVEPLOT_RESOLUTION);
+
+    float average = 0.0f;
+    for(size_t i = 0; i != 16; ++i)
+    {
+        average += waveplot->resample[i];
+    }
+
+    unsigned int result = 0;
+    for(size_t i = 0; i != 16; ++i)
+    {
+        if(waveplot->resample[i] >= average)
+            result |= 1 << (15 - i);
+    }
+
+    return result;
+}

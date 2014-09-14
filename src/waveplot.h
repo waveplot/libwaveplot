@@ -49,4 +49,6 @@ LIBWAVEPLOT_API void update_waveplot(waveplot_t* waveplot, audio_samples_t* samp
 LIBWAVEPLOT_API void finish_waveplot(waveplot_t* waveplot);
 LIBWAVEPLOT_API void resample_waveplot(waveplot_t* waveplot, size_t target_length, size_t target_amplitude);
 
+LIBWAVEPLOT_API unsigned int generate_sonic_hash(waveplot_t* waveplot);
+
 #endif //__LIBWP_WAVEPLOT_H__
