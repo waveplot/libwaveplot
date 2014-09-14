@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include <math.h>
 
-#include "libavutil/avutil.h"
+#include "libavformat/avformat.h"
 
 #ifdef min
 #undef min
