@@ -7,7 +7,6 @@ AM_CFLAGS = -std=c99 -O3 -Wall -Wextra -Wpedantic
 
 # this lists the binaries to produce, the (non-PHONY, binary) targets in
 # the previous manual Makefile
-include_HEADERS = audio.h dllexport.h dr.h file.h info.h typedefs.h waveplot.h
 lib_LTLIBRARIES = libwaveplot.la
 libwaveplot_la_SOURCES = audio.c audio.h dllexport.h dr.c dr.h file.c file.h info.c info.h typedefs.h waveplot.c waveplot.h
 libwaveplot_la_LDFLAGS = -version-info 1:0:1 -lm -lavutil -lavcodec -lavformat -lavresample

@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.69])
 AC_INIT([libwaveplot],[1.0],[ben.sput@gmail.com])
-AC_CONFIG_SRCDIR([src/waveplot.h])
+AC_CONFIG_SRCDIR([libwaveplot/waveplot.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE
 LT_INIT
@@ -26,5 +26,5 @@ AC_TYPE_UINT8_T
 # Checks for library functions.
 AC_FUNC_MALLOC
 
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile libwaveplot/Makefile])
 AC_OUTPUT

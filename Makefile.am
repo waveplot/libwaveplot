@@ -1,2 +1,4 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src
+SUBDIRS = libwaveplot
+
+nobase_include_HEADERS = libwaveplot/*.h
